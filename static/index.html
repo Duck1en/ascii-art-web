@@ -38,7 +38,7 @@
                     <a class="nav-link active" aria-current="page" href="/index.html">ASCII-art</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="https://alem.school/">Alem.School</a>
+                    <a class="nav-link" href="https://01.alem.school/intra/">Alem.School</a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link" href="https://01.alem.school/git/">Dashboard</a>
@@ -59,13 +59,13 @@
         <div class="input-group">
             <!-- <input type="text" class="form-control"> -->
           
-            <select class="form-select text-bg-success" name="font" required id="inputSelect" >
+            <select class="form-select text-bg-success" name="banner" required id="inputSelect" >
               <option disabled selected value="">Choose your font</option>
               <option value="standard">standard</option>
               <option value="shadow">shadow</option>
               <option value="thinkertoy">thinkertoy</option>
             </select>
-              <button class="btn btn-success btn-outline-light" type="submit">convert</button>
+              <button class="btn btn-success btn-outline-light" name="submit_btn" value="submit" type="submit">convert</button>
           </div>
         </form>
     </div>
@@ -93,7 +93,7 @@
     <!--Output-->
     
     <div class="rounded-3 bg-dark p-5 text-white">
-      <pre class="overflow">{{ .Output }}</pre>
+      <pre class="overflow">{{ . }}</pre>
     </div>
   </section>
 </body>

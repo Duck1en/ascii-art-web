@@ -4,188 +4,166 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"text/template"
 
-	ascii "asciiart/ascii"
+	asciiart "asciiart/ascii"
 )
 
-var t *template.Template
-
-type Home struct {
-	Input, Output, Font /*err*/ string
-}
-
 func main() {
-	http.HandleFunc("/", Ascii)
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	HandleRequest()
+}
+
+var mainTmpl, errTmpl *template.Template
+
+func HandleRequest() {
+	var err error
+	mainTmpl, err = template.ParseFiles("static/index.html")
+	ErrorCheck(err)
+	errTmpl, err = template.ParseFiles("static/error.html")
+	ErrorCheck(err)
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/ascii-art-web", AsciiHandler)
-
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+	http.HandleFunc("/", path_page)
+	http.HandleFunc("/ascii-art-web", home_page)
 	fmt.Printf("Starting server at port 8080\nhttp://localhost:8080/\n")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
-	}
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func init() {
-	t = template.Must(template.ParseGlob("./static/*.html"))
-}
-
-func Ascii(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		errorHandler(w, r, http.StatusNotFound)
+func home_page(page http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		errorHandler(page, http.StatusBadRequest, nil)
 		return
 	}
-	tmpl, err := template.ParseFiles("static/index.html")
+
+	font := r.FormValue("banner")
+	text := r.FormValue("input")
+	if text == "" {
+		errorHandler(page, http.StatusBadRequest, nil)
+		return
+	}
+
+	finalArt, code, err := asciiart.AsciiDrawer(text, font)
 	if err != nil {
-		log.Fatalf("template parse error: %v", err)
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func AsciiHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/ascii-art-web" {
-		errorHandler(w, r, http.StatusNotFound)
-		return
-	}
-	switch r.Method {
-	case "POST":
-		h := Home{}
-		h.Output = ""
-		if err := r.ParseForm(); err != nil {
-			fmt.Fprintf(w, "ParseForm() err: %v", err)
-			return
-		}
-
-		in := r.FormValue("input")
-		f := r.FormValue("font")
-		f += ".txt"
-
-		h.Input = in
-		h.Font = f
-
-		result, err := ascii.AsciiDrawer(in, f)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		h.Output = result
-		t.ExecuteTemplate(w, "index.html", h)
-	default:
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		errorHandler(page, code, err)
 		return
 	}
 
-	// // fmt.Fprintf(w, "%s", Output)
+	mainTmpl.Execute(page, finalArt)
 }
 
-func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-	w.WriteHeader(status)
-	if status == http.StatusNotFound {
-		fmt.Fprint(w, "404: Not Found")
+func path_page(page http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		errorHandler(page, http.StatusNotFound, nil)
+		return
 	}
+	if r.Method != http.MethodGet {
+		errorHandler(page, http.StatusBadRequest, nil)
+		return
+	}
+	mainTmpl.Execute(page, nil)
+}
+
+func ErrorCheck(err error) {
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+}
+
+func errorHandler(page http.ResponseWriter, status int, err error) {
+	page.WriteHeader(status)
+	errorText := fmt.Sprintf("%d %s\n%v", status, http.StatusText(status), err)
+	errTmpl.Execute(page, errorText)
 }
 
 // package main
 
 // import (
-// 	"artweb/ascii"
 // 	"fmt"
 // 	"log"
 // 	"net/http"
-// 	"os"
 // 	"text/template"
+
+// 	ascii "asciiart/ascii"
 // )
 
+// var t *template.Template
+
+// type Home struct {
+// 	Input, Output, Font /*err*/ string
+// }
+
 // func main() {
-// 	HandleRequest()
+// 	http.HandleFunc("/", Ascii)
+// 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+// 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+// 	http.HandleFunc("/ascii-art-web", AsciiHandler)
+
+// 	fmt.Printf("Starting server at port 8080\nhttp://localhost:8080/\n")
+// 	if err := http.ListenAndServe(":8080", nil); err != nil {
+// 		log.Fatal(err)
+// 	}
 // }
 
-// var mainTmpl, errTmpl *template.Template
-
-// func HandleRequest() {
-// 	var err error
-// 	mainTmpl, err = template.ParseFiles("static/index.html")
-// 	ErrorCheck(err)
-// 	errTmpl, err = template.ParseFiles("static/error.html")
-// 	ErrorCheck(err)
-
-// 	fs := http.FileServer(http.Dir("templates"))
-// 	http.Handle("/templates/", http.StripPrefix("/templates/", fs))
-// 	http.HandleFunc("/", path_page)
-// 	http.HandleFunc("/ascii-art", home_page)
-// 	fmt.Println("Server is started")
-// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// func init() {
+// 	t = template.Must(template.ParseGlob("./static/*.html"))
 // }
 
-// func home_page(page http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodPost {
-// 		page.WriteHeader(http.StatusMethodNotAllowed)
-// 		errTmpl.Execute(page, "405: Status method not allowed")
+// func Ascii(w http.ResponseWriter, r *http.Request) {
+// 	if r.URL.Path != "/" {
+// 		errorHandler(w, r, http.StatusNotFound)
 // 		return
 // 	}
-
-// 	font := r.FormValue("banner")
-// 	if font != "standard" && font != "shadow" && font != "thinkertoy" {
-// 		page.WriteHeader(http.StatusBadRequest)
-// 		errTmpl.Execute(page, "400: Bad request")
-// 		return
+// 	tmpl, err := template.ParseFiles("static/index.html")
+// 	if err != nil {
+// 		log.Fatalf("template parse error: %v", err)
 // 	}
 
-// 	text := r.FormValue("data")
-// 	if text == "" {
-// 		page.WriteHeader(http.StatusBadRequest)
-// 		errTmpl.Execute(page, "400: Bad request")
+// 	tmpl.Execute(w, nil)
+// }
+
+// func AsciiHandler(w http.ResponseWriter, r *http.Request) {
+// 	if r.URL.Path != "/ascii-art-web" {
+// 		errorHandler(w, r, http.StatusNotFound)
 // 		return
 // 	}
-
-// 	var textUpd string
-
-// 	for _, v := range text {
-// 		if v == 13 {
-// 			continue
-// 		}
-// 		if !(v >= 32 && v <= 126 || v == 10) {
-// 			page.WriteHeader(http.StatusBadRequest)
-// 			errTmpl.Execute(page, "400: Bad request")
+// 	switch r.Method {
+// 	case "POST":
+// 		h := Home{}
+// 		h.Output = ""
+// 		if err := r.ParseForm(); err != nil {
+// 			fmt.Fprintf(w, "ParseForm() err: %v", err)
 // 			return
 // 		}
-// 		textUpd += string(v)
-// 	}
 
-// 	f, err3 := ascii.AssingFont(font)
-// 	ErrorCheck(err3)
-// 	finalArt := ascii.OutputAscii(textUpd, f)
+// 		in := r.FormValue("input")
+// 		f := r.FormValue("font")
+// 		f += ".txt"
 
-// 	btnClicked := r.FormValue("submit_button")
+// 		h.Input = in
+// 		h.Font = f
 
-// 	if btnClicked == "Submit" {
-// 		mainTmpl.Execute(page, finalArt)
-// 	} else {
-// 		page.WriteHeader(http.StatusBadRequest)
-// 		errTmpl.Execute(page, "400: Bad request")
-// 	}
-// }
+// 		result, err := ascii.AsciiDrawer(in, f)
+// 		if err != nil {
+// 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+// 			return
+// 		}
 
-// func path_page(page http.ResponseWriter, r *http.Request) {
-// 	if r.URL.Path != "/" {
-// 		page.WriteHeader(http.StatusNotFound)
-// 		errTmpl.Execute(page, "404: Not found")
+// 		h.Output = result
+// 		t.ExecuteTemplate(w, "index.html", h)
+// 	default:
+// 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 // 		return
 // 	}
-// 	if r.Method != http.MethodGet {
-// 		page.WriteHeader(http.StatusMethodNotAllowed)
-// 		errTmpl.Execute(page, "405: Status method not allowed")
-// 		return
-// 	}
-// 	mainTmpl.Execute(page, nil)
+
+// 	// // fmt.Fprintf(w, "%s", Output)
 // }
 
-// func ErrorCheck(err error) {
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		os.Exit(0)
+// func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
+// 	w.WriteHeader(status)
+// 	if status == http.StatusNotFound {
+// 		fmt.Fprint(w, "404: Not Found")
 // 	}
 // }

@@ -1,36 +1,41 @@
 package asciiart
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
 )
 
-func AsciiDrawer(input string, font string) (string, error) {
-	ascii, err := AssingFont(font)
+var ErrNotFound = errors.New("font does not exist")
+
+func AsciiDrawer(input string, font string) (string, int, error) {
+	ascii, code, err := AssingFont(font)
 	if err != nil {
 		// log.Fatalf("Main: %v\n", err.Error())
-		return "", err
+		return "", code, err
 	}
 
-	input, err = CheckInput(input)
+	errors.Is(err, ErrNotFound)
+
+	input, code, err = CheckInput(input)
 	if err != nil {
 		// log.Fatalf("Main: %v\n", err.Error())
-		return "", err
+		return "", code, err
 	}
 
 	res := OutputAscii(input, ascii)
-	return res, nil
+	return res, code, nil
 }
 
 // assigns a font to map
-func AssingFont(str string) (map[rune]string, error) {
-	str = "fonts/" + str
+func AssingFont(str string) (map[rune]string, int, error) {
+	str = "fonts/" + str + ".txt"
 
 	m := make(map[rune]string)
 	content, err := ioutil.ReadFile(str)
 	if err != nil {
-		return nil, fmt.Errorf("AssignFont: %v", err.Error())
+		return nil, 404, fmt.Errorf("AssignFont: %v", err.Error())
 	}
 
 	//
@@ -52,9 +57,9 @@ func AssingFont(str string) (map[rune]string, error) {
 	}
 	// checks if all ascii symbols are in banner file
 	if len(m) != 95 {
-		return nil, fmt.Errorf("AssingFont: Banner file corrupted")
+		return nil, 500, fmt.Errorf("AssingFont: Banner file corrupted")
 	}
-	return m, nil
+	return m, 200, nil
 }
 
 func OutputAscii(str string, ascii map[rune]string) string {
@@ -78,13 +83,13 @@ func OutputAscii(str string, ascii map[rune]string) string {
 	return res[:len(res)-1]
 }
 
-func CheckInput(str string) (string, error) {
+func CheckInput(str string) (string, int, error) {
 	str = strings.ReplaceAll(str, "\r\n", "\n")
 
 	for _, s := range str {
 		if s != '\n' && (s < 32 || s > 126) {
-			return str, fmt.Errorf("checkInputStr: incorrect symbols in %s", str)
+			return str, 400, fmt.Errorf("checkInputStr: incorrect symbols in %s", str)
 		}
 	}
-	return str, nil
+	return str, 200, nil
 }
