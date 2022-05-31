@@ -42,3 +42,8 @@ blockquote {
 .description {
   padding-top: 6%;
 }
+
+.btn:focus {
+  outline: none;
+  box-shadow: none;
+}
