@@ -1,9 +1,8 @@
 # :duck: ascii-art :duck:
 
-### to start the server:
-
+### to start the server from root directory:
 ```
-$ go run server.go
+$ go run ./cmd/server.go
 ```
 
 ```
