@@ -20,7 +20,7 @@ $ go run ./cmd/server.go
 
 #### Algorithm:
 
-```
+```ru
 Assign banner to a map with rune keys(' '-'~')
 
 Replace "\r\n" with "\n"
