@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ var (
 
 var port = ":8080"
 
-func HandleRequest() {
+func main() {
 	var err error
 	mainTmpl, err = template.ParseFiles("static/index.html")
 	ErrorCheck(err)
