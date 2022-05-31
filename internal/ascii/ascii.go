@@ -16,8 +16,6 @@ func AsciiDrawer(input string, font string) (string, int, error) {
 		return "", code, err
 	}
 
-	errors.Is(err, ErrNotFound)
-
 	input, code, err = CheckInput(input)
 	if err != nil {
 		// log.Fatalf("Main: %v\n", err.Error())
