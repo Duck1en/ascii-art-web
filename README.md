@@ -32,7 +32,7 @@ loop over every line in array {
     }
     loop through every character in that line {
 	loop through 8th new lines in given BIG LETTER {
-	add the line to the temporary result
+		add the line to the temporary result
         }
     }
 	assemble the result line by line from the temporary result
