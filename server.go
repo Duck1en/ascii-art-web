@@ -10,13 +10,9 @@ import (
 	asciiart "asciiart/ascii"
 )
 
-func main() {
-	HandleRequest()
-}
-
 var mainTmpl, errTmpl *template.Template
 
-func HandleRequest() {
+func main() {
 	var err error
 	mainTmpl, err = template.ParseFiles("static/index.html")
 	ErrorCheck(err)
@@ -25,8 +21,10 @@ func HandleRequest() {
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
+
 	http.HandleFunc("/", path_page)
 	http.HandleFunc("/ascii-art-web", home_page)
+
 	fmt.Printf("Starting server at port 8080\nhttp://localhost:8080/\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
