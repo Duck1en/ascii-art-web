@@ -18,6 +18,8 @@ $ go run ./cmd/server.go
 
 ## Implementation details
 
+#### Algorithm:
+
 ```
 Assign banner to a map with rune keys(' '-'~')
 
