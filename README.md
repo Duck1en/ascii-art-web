@@ -5,7 +5,8 @@ ASCII Art Web consists in creationg and running a server, in which it will be po
 
 ## Authors
 
-Rakhat (@Rshezarr) && Zhandos (@Duck1en)
+Rakhat && Zhandos 
+@Rshezarr @Duck1en
 ## Usage
 To start the server from root directory:
 ```
