@@ -1,6 +1,7 @@
-package main
+package server
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,11 +11,16 @@ import (
 	asciiart "asciiart/ascii"
 )
 
-func main() {
-	HandleRequest()
-}
-
 var mainTmpl, errTmpl *template.Template
+
+var (
+	ErrNotFound    = errors.New("page does not exist")
+	ErrBadRequest  = errors.New("bad request")
+	ErrEmptyInput  = errors.New("no input given")
+	ErrWrongMethod = errors.New("method not allowed")
+)
+
+var port = ":8080"
 
 func HandleRequest() {
 	var err error
@@ -27,20 +33,21 @@ func HandleRequest() {
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 	http.HandleFunc("/", path_page)
 	http.HandleFunc("/ascii-art-web", home_page)
-	fmt.Printf("Starting server at port 8080\nhttp://localhost:8080/\n")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Printf("Starting server at port %s\nhttp://localhost%s/\n", port, port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }
 
 func home_page(page http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		errorHandler(page, http.StatusBadRequest, nil)
+		errorHandler(page, http.StatusMethodNotAllowed, ErrWrongMethod)
 		return
 	}
 
 	font := r.FormValue("banner")
 	text := r.FormValue("input")
+	color := r.FormValue("color")
 	if text == "" {
-		errorHandler(page, http.StatusBadRequest, nil)
+		errorHandler(page, http.StatusBadRequest, ErrBadRequest)
 		return
 	}
 
@@ -50,16 +57,24 @@ func home_page(page http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mainTmpl.Execute(page, finalArt)
+	d := struct {
+		Data  string
+		Color string
+	}{
+		Data:  finalArt,
+		Color: color,
+	}
+
+	mainTmpl.Execute(page, d)
 }
 
 func path_page(page http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		errorHandler(page, http.StatusNotFound, nil)
+		errorHandler(page, http.StatusNotFound, ErrNotFound)
 		return
 	}
 	if r.Method != http.MethodGet {
-		errorHandler(page, http.StatusBadRequest, nil)
+		errorHandler(page, http.StatusBadRequest, ErrBadRequest)
 		return
 	}
 	mainTmpl.Execute(page, nil)
