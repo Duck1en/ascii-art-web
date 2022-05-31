@@ -31,7 +31,7 @@ loop over every line in array {
         add a new line to the result
     }
     loop through every character in that line {
-		loop through 8th new lines in given BIG LETTER {
+	loop through 8th new lines in given BIG LETTER {
 			add the line to the temporary result
         }
     }
