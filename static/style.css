@@ -38,19 +38,3 @@ blockquote {
   overflow-y: hidden;
   line-height: 1.15;
 }
-
-/* #art {
-  transition: ease .8s;
-}
-#art:hover {
-  position: relative;
-}
-
-
-#art:hover:after {
-  content: url(../images/giant_duck2.jpg) ;
-  display: block;
-  position: absolute;
-  left: 167px;
-  top: 26px; 
-} */
